@@ -37,11 +37,11 @@ typedef struct{
     float r,g,b;
 } RGB;
 typedef struct {
-    SDL_FRect btn;          // прямоугольник кнопки
-    bool typing;            // режим ввода включён?
-    char buf[64];           // буфер ввода
-    int len;                // текущая длина буфера
-    int value;              // последнее принятие значение (число)
+    SDL_FRect btn;         
+    bool typing;            // рввод
+    char buf[64];           // буфер 
+    int len;                // длинна
+    int value;              
     vec rat;
     char sost;
     bool sphere_visible;
@@ -103,14 +103,14 @@ void fiksator(tocka *q, matrix p, int W, int H , float *x, float *y) {
     vec4 v = { q->x, q->y, q->z, 1.0f };
     vec4 clip = vec4_mul_mat4x4(v, p);
 
-    // ⚠️ перспективное деление
+
     if (clip.w != 0.0f) {
         clip.x /= clip.w;
         clip.y /= clip.w;
         clip.z /= clip.w;
     }
 
-    // Преобразуем из NDC [-1..1] в экранные координаты
+
     *x = trueW(clip.x, W);
     *y = trueH(clip.y, H);
 }
@@ -260,9 +260,9 @@ void teni_gouraud(SDL_Renderer *ren, Triangle *t, float x[3], float y[3],
     }
     SDL_RenderGeometry(ren, NULL, v, 3, NULL, 0);
 }
-static float yaw = 0.0f;    // поворот вокруг Y
-static float pitch = 0.0f;  // поворот вокруг X
-static float roll = 0.0f;   // поворот вокруг Z
+static float yaw = 0.0f;    //  Y
+static float pitch = 0.0f;  // X
+static float roll = 0.0f;   //  Z
 static float zoom = -12.0f; 
 static bool dragging = false;
 void apply_transform(Triangle *src, Triangle *dst, int count,
@@ -289,25 +289,23 @@ static inline vec4 mul_mat4_vec4(matrix M, vec4 v){
     return r;
 }
 
-// unproject ndc -> view с учётом перспективного деления
 static inline vec3 ndc_to_view(matrix proj_inv, float nx, float ny, float nz){
     vec4 c = { nx, ny, nz, 1.0f };
     vec4 v = mul_mat4_vec4(proj_inv, c);
     if (v.w != 0.0f){ v.x/=v.w; v.y/=v.w; v.z/=v.w; }
     return (vec3){ v.x, v.y, v.z };
 }
-// вернёт точку в координатах вида на плоскости z = z_view (отрицательной!)
+
 static inline vec3 mouse_to_view_at_z(float mx, float my, int W, int H,
                                       matrix proj_inv, float z_view)
 {
     float nx, ny;
     screen_to_ndc(mx, my, W, H, &nx, &ny);
 
-    // точки луча в coords вида: z_ndc = -1 (near), +1 (far)
     vec3 v_near = ndc_to_view(proj_inv, nx, ny, -1.0f);
     vec3 v_far  = ndc_to_view(proj_inv, nx, ny,  1.0f);
 
-    // параметр вдоль луча так, чтобы z == z_view
+
     float t = (z_view - v_near.z) / (v_far.z - v_near.z);
 
     vec3 p = {
@@ -373,21 +371,20 @@ void cratefon(SDL_Renderer *r, int W, int H, float dt){
     const float amp = 0.37f;
     SDL_FColor c00 = { clamp01(fr + amp * sinf(t*0.9f + 0.0f)),
                        clamp01(fg + amp * cosf(t*1.1f + 0.4f)),
-                       clamp01(fb + amp * sinf(t*1.0f + 1.3f)), 0.4f }; // ниж-лев
+                       clamp01(fb + amp * sinf(t*1.0f + 1.3f)), 0.4f }; 
 
     SDL_FColor c10 = { clamp01(fr + amp * sinf(t*0.9f + 0.7f)),
                        clamp01(fg + amp * cosf(t*1.0f + 1.2f)),
-                       clamp01(fb + amp * sinf(t*1.2f + 2.1f)), 0.4f }; // ниж-прав
+                       clamp01(fb + amp * sinf(t*1.2f + 2.1f)), 0.4f }; 
 
     SDL_FColor c01 = { clamp01(fr + amp * sinf(t*1.1f + 2.0f)),
                        clamp01(fg + amp * cosf(t*0.8f + 2.6f)),
-                       clamp01(fb + amp * sinf(t*1.3f + 3.1f)), 0.4f }; // верх-лев
+                       clamp01(fb + amp * sinf(t*1.3f + 3.1f)), 0.4f }; 
 
     SDL_FColor c11 = { clamp01(fr + amp * sinf(t*0.7f + 3.0f)),
                        clamp01(fg + amp * cosf(t*1.2f + 3.7f)),
                        clamp01(fb + amp * sinf(t*0.9f + 4.2f)), 0.4f }; 
 
-    // углы в НДК (-1..1)
     float X[4] = {-1, 1, -1, 1};
     float Y[4] = {-1,-1,  1, 1};
     SDL_Vertex v[4] = {0};
@@ -491,15 +488,12 @@ void draw_sphere(SDL_Renderer *renderer,
     T1.num[i] = mat_mul_v3(get_rot_x(pitchLoc), T1.num[i]);
     T1.num[i] = mat_mul_v3(get_rot_z(rollLoc),  T1.num[i]);
 
-    // 2️⃣ перенос в мировые координаты
     T1.num[i] = v3_add(T1.num[i], (tocka){ center.x, center.y, center.z });
 
-    // 3️⃣ применяем вращение "сцены" (камера)
     T1.num[i] = mat_mul_v3(get_rot_y(scene_yaw),   T1.num[i]);
     T1.num[i] = mat_mul_v3(get_rot_x(scene_pitch), T1.num[i]);
     T1.num[i] = mat_mul_v3(get_rot_z(scene_roll),  T1.num[i]);
 
-    // 4️⃣ добавляем зум (камера вдоль z)
     T1.num[i] = v3_add(T1.num[i], (tocka){ 0, 0, zoomLoc });
         }
         for(int i=0;i<3;++i){
@@ -507,15 +501,12 @@ void draw_sphere(SDL_Renderer *renderer,
     T2.num[i] = mat_mul_v3(get_rot_x(pitchLoc), T2.num[i]);
     T2.num[i] = mat_mul_v3(get_rot_z(rollLoc),  T2.num[i]);
 
-    // 2️⃣ перенос в мировые координаты
     T2.num[i] = v3_add(T2.num[i], (tocka){ center.x, center.y, center.z });
 
-    // 3️⃣ применяем вращение сцены (камера)
     T2.num[i] = mat_mul_v3(get_rot_y(scene_yaw),   T2.num[i]);
     T2.num[i] = mat_mul_v3(get_rot_x(scene_pitch), T2.num[i]);
     T2.num[i] = mat_mul_v3(get_rot_z(scene_roll),  T2.num[i]);
 
-    // 4️⃣ добавляем зум (камера вдоль z)
     T2.num[i] = v3_add(T2.num[i], (tocka){ 0, 0, zoomLoc });
         }
 
