@@ -231,7 +231,7 @@ static inline vec3 sub3(vec3 a, vec3 b){ return (vec3){a.x-b.x, a.y-b.y, a.z-b.z
 static inline float dot3(vec3 a, vec3 b){ return a.x*b.x + a.y*b.y + a.z*b.z; }
 static inline void screen_to_ndc(float sx, float sy, int W, int H, float *nx, float *ny){
     *nx =  2.0f * sx / (float)W - 1.0f;
-    *ny =  1.0f - 2.0f * sy / (float)H; // инвертируем Y экрана
+    *ny =  1.0f - 2.0f * sy / (float)H; 
 }
 void teni_gouraud(SDL_Renderer *ren, Triangle *t, float x[3], float y[3],
                   RGB base, vec3 obj_center_world)
