@@ -507,14 +507,6 @@ void draw_sphere(SDL_Renderer *renderer,
     T1.num[i] = mat_mul_v3(get_rot_y(yawLoc),   T1.num[i]);
     T1.num[i] = mat_mul_v3(get_rot_x(pitchLoc), T1.num[i]);
     T1.num[i] = mat_mul_v3(get_rot_z(rollLoc),  T1.num[i]);
-
-    T1.num[i] = v3_add(T1.num[i], (tocka){ center.x, center.y, center.z });
-
-    T1.num[i] = mat_mul_v3(get_rot_y(scene_yaw),   T1.num[i]);
-    T1.num[i] = mat_mul_v3(get_rot_x(scene_pitch), T1.num[i]);
-    T1.num[i] = mat_mul_v3(get_rot_z(scene_roll),  T1.num[i]);
-
-    T1.num[i] = v3_add(T1.num[i], (tocka){ 0, 0, zoomLoc });
     T1.num[i] = v3_add(T1.num[i], (tocka){ center.x, center.y, center.z });
     T1.num[i] = world_to_view_orbit(T1.num[i], (vec){0,0,-10},
                                 orbit_yaw, orbit_pitch, zoomLoc,0);
@@ -523,14 +515,6 @@ void draw_sphere(SDL_Renderer *renderer,
     T2.num[i] = mat_mul_v3(get_rot_y(yawLoc),   T2.num[i]);
     T2.num[i] = mat_mul_v3(get_rot_x(pitchLoc), T2.num[i]);
     T2.num[i] = mat_mul_v3(get_rot_z(rollLoc),  T2.num[i]);
-
-    T2.num[i] = v3_add(T2.num[i], (tocka){ center.x, center.y, center.z });
-
-    T2.num[i] = mat_mul_v3(get_rot_y(scene_yaw),   T2.num[i]);
-    T2.num[i] = mat_mul_v3(get_rot_x(scene_pitch), T2.num[i]);
-    T2.num[i] = mat_mul_v3(get_rot_z(scene_roll),  T2.num[i]);
-
-    T2.num[i] = v3_add(T2.num[i], (tocka){ 0, 0, zoomLoc });
     T2.num[i] = v3_add(T2.num[i], (tocka){ center.x, center.y, center.z });
     T2.num[i] = world_to_view_orbit(T2.num[i], (vec){0,0,-10},
                                 orbit_yaw, orbit_pitch, zoomLoc,0);
