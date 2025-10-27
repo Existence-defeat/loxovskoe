@@ -420,12 +420,32 @@ int qqq(float y,float yaw){
     }
     else{return (y+yaw);}
 }
+static inline tocka world_to_view_orbit(tocka p_world,
+                                        vec pivot,
+                                        float yawq, float pitchq,
+                                        float distZ,float rollq){
+    p_world = (tocka){ p_world.x - pivot.x,
+                       p_world.y - pivot.y,
+                       p_world.z - pivot.z };
+
+    p_world = mat_mul_v3(get_rot_y(-yawq),   p_world);
+    p_world = mat_mul_v3(get_rot_x(-pitchq), p_world);
+    p_world = mat_mul_v3(get_rot_z(-rollq), p_world);
+
+    p_world = (tocka){ p_world.x + pivot.x,
+                       p_world.y + pivot.y,
+                       p_world.z + pivot.z };
+
+    p_world = v3_add(p_world, (tocka){0,0, distZ});
+
+    return p_world; 
+                                        }
 void draw_sphere(SDL_Renderer *renderer,
                  matrix proj,
                  int W, int H,
                  vec center, float radius,
                  int segTheta, int segPhi,
-                 float angle, bool freeze,float dt)
+                 float angle, bool freeze,float dt,float orbit_yaw,float orbit_pitch,float qq1)
 {
     
     float spin = freeze ? 0.0f : angle * 0.7f;
@@ -484,7 +504,7 @@ void draw_sphere(SDL_Renderer *renderer,
             Triangle T2 = { { v00, v11, v01 } };
 
             for(int i=0;i<3;++i){
-                T1.num[i] = mat_mul_v3(get_rot_y(yawLoc),   T1.num[i]);
+    T1.num[i] = mat_mul_v3(get_rot_y(yawLoc),   T1.num[i]);
     T1.num[i] = mat_mul_v3(get_rot_x(pitchLoc), T1.num[i]);
     T1.num[i] = mat_mul_v3(get_rot_z(rollLoc),  T1.num[i]);
 
@@ -495,9 +515,12 @@ void draw_sphere(SDL_Renderer *renderer,
     T1.num[i] = mat_mul_v3(get_rot_z(scene_roll),  T1.num[i]);
 
     T1.num[i] = v3_add(T1.num[i], (tocka){ 0, 0, zoomLoc });
+    T1.num[i] = v3_add(T1.num[i], (tocka){ center.x, center.y, center.z });
+    T1.num[i] = world_to_view_orbit(T1.num[i], (vec){0,0,-10},
+                                orbit_yaw, orbit_pitch, zoomLoc,0);
         }
         for(int i=0;i<3;++i){
-             T2.num[i] = mat_mul_v3(get_rot_y(yawLoc),   T2.num[i]);
+    T2.num[i] = mat_mul_v3(get_rot_y(yawLoc),   T2.num[i]);
     T2.num[i] = mat_mul_v3(get_rot_x(pitchLoc), T2.num[i]);
     T2.num[i] = mat_mul_v3(get_rot_z(rollLoc),  T2.num[i]);
 
@@ -508,9 +531,17 @@ void draw_sphere(SDL_Renderer *renderer,
     T2.num[i] = mat_mul_v3(get_rot_z(scene_roll),  T2.num[i]);
 
     T2.num[i] = v3_add(T2.num[i], (tocka){ 0, 0, zoomLoc });
+    T2.num[i] = v3_add(T2.num[i], (tocka){ center.x, center.y, center.z });
+    T2.num[i] = world_to_view_orbit(T2.num[i], (vec){0,0,-10},
+                                orbit_yaw, orbit_pitch, zoomLoc,0);
         }
 
-
+        tocka c_view = world_to_view_orbit(
+    (tocka){ center.x, center.y, center.z },
+    (vec){0,0,0},
+    orbit_yaw, orbit_pitch, zoomLoc, 0.0f
+);
+vec3 obj_center_view = (vec3){ c_view.x, c_view.y, c_view.z };
         vec3 cam = (vec3){0,0,0};
 
         if (is_this_triangle(&T1, cam)){
@@ -528,139 +559,6 @@ void draw_sphere(SDL_Renderer *renderer,
         }
     }
 }}
-matrix invert4x4(matrix a) {
-    matrix inv;
-    float invOut[16];
-    float m[16];
-    for (int i=0;i<4;i++)
-        for (int j=0;j<4;j++)
-            m[i*4+j] = a.m[i][j];
-
-    invOut[0] = m[5]  * m[10] * m[15] -
-             m[5]  * m[11] * m[14] -
-             m[9]  * m[6]  * m[15] +
-             m[9]  * m[7]  * m[14] +
-             m[13] * m[6]  * m[11] -
-             m[13] * m[7]  * m[10];
-
-    invOut[4] = -m[4]  * m[10] * m[15] +
-              m[4]  * m[11] * m[14] +
-              m[8]  * m[6]  * m[15] -
-              m[8]  * m[7]  * m[14] -
-              m[12] * m[6]  * m[11] +
-              m[12] * m[7]  * m[10];
-
-    invOut[8] = m[4]  * m[9] * m[15] -
-             m[4]  * m[11] * m[13] -
-             m[8]  * m[5] * m[15] +
-             m[8]  * m[7] * m[13] +
-             m[12] * m[5] * m[11] -
-             m[12] * m[7] * m[9];
-
-    invOut[12] = -m[4]  * m[9] * m[14] +
-               m[4]  * m[10] * m[13] +
-               m[8]  * m[5] * m[14] -
-               m[8]  * m[6] * m[13] -
-               m[12] * m[5] * m[10] +
-               m[12] * m[6] * m[9];
-
-    invOut[1] = -m[1]  * m[10] * m[15] +
-              m[1]  * m[11] * m[14] +
-              m[9]  * m[2] * m[15] -
-              m[9]  * m[3] * m[14] -
-              m[13] * m[2] * m[11] +
-              m[13] * m[3] * m[10];
-
-    invOut[5] = m[0]  * m[10] * m[15] -
-             m[0]  * m[11] * m[14] -
-             m[8]  * m[2] * m[15] +
-             m[8]  * m[3] * m[14] +
-             m[12] * m[2] * m[11] -
-             m[12] * m[3] * m[10];
-
-    invOut[9] = -m[0]  * m[9] * m[15] +
-              m[0]  * m[11] * m[13] +
-              m[8]  * m[1] * m[15] -
-              m[8]  * m[3] * m[13] -
-              m[12] * m[1] * m[11] +
-              m[12] * m[3] * m[9];
-
-    invOut[13] = m[0]  * m[9] * m[14] -
-              m[0]  * m[10] * m[13] -
-              m[8]  * m[1] * m[14] +
-              m[8]  * m[2] * m[13] +
-              m[12] * m[1] * m[10] -
-              m[12] * m[2] * m[9];
-
-    invOut[2] = m[1]  * m[6] * m[15] -
-             m[1]  * m[7] * m[14] -
-             m[5]  * m[2] * m[15] +
-             m[5]  * m[3] * m[14] +
-             m[13] * m[2] * m[7] -
-             m[13] * m[3] * m[6];
-
-    invOut[6] = -m[0]  * m[6] * m[15] +
-              m[0]  * m[7] * m[14] +
-              m[4]  * m[2] * m[15] -
-              m[4]  * m[3] * m[14] -
-              m[12] * m[2] * m[7] +
-              m[12] * m[3] * m[6];
-
-    invOut[10] = m[0]  * m[5] * m[15] -
-              m[0]  * m[7] * m[13] -
-              m[4]  * m[1] * m[15] +
-              m[4]  * m[3] * m[13] +
-              m[12] * m[1] * m[7] -
-              m[12] * m[3] * m[5];
-
-    invOut[14] = -m[0]  * m[5] * m[14] +
-               m[0]  * m[6] * m[13] +
-               m[4]  * m[1] * m[14] -
-               m[4]  * m[2] * m[13] -
-               m[12] * m[1] * m[6] +
-               m[12] * m[2] * m[5];
-
-    invOut[3] = -m[1] * m[6] * m[11] +
-             m[1] * m[7] * m[10] +
-             m[5] * m[2] * m[11] -
-             m[5] * m[3] * m[10] -
-             m[9] * m[2] * m[7] +
-             m[9] * m[3] * m[6];
-
-    invOut[7] = m[0] * m[6] * m[11] -
-             m[0] * m[7] * m[10] -
-             m[4] * m[2] * m[11] +
-             m[4] * m[3] * m[10] +
-             m[8] * m[2] * m[7] -
-             m[8] * m[3] * m[6];
-
-    invOut[11] = -m[0] * m[5] * m[11] +
-               m[0] * m[7] * m[9] +
-               m[4] * m[1] * m[11] -
-               m[4] * m[3] * m[9] -
-               m[8] * m[1] * m[7] +
-               m[8] * m[3] * m[5];
-
-    invOut[15] = m[0] * m[5] * m[10] -
-              m[0] * m[6] * m[9] -
-              m[4] * m[1] * m[10] +
-              m[4] * m[2] * m[9] +
-              m[8] * m[1] * m[6] -
-              m[8] * m[2] * m[5];
-
-    float det = m[0] * invOut[0] + m[1] * invOut[4] + m[2] * invOut[8] + m[3] * invOut[12];
-    if (det == 0.0f) return a; 
-
-    det = 1.0f / det;
-    for (int i = 0; i < 16; i++)
-        invOut[i] *= det;
-
-    for (int i=0;i<4;i++)
-        for (int j=0;j<4;j++)
-            inv.m[i][j] = invOut[i*4+j];
-
-    return inv;
-}
 static UI ui = {0};
 static vec debug_sphere_pos = {0, 0, -10};
 static void draw_button(SDL_Renderer *r) {
@@ -696,9 +594,12 @@ static int sphere_count = 0;
     SDL_Init(SDL_INIT_VIDEO);
     static bool right_click_processed = false;
     static bool eshe = false;
-    
+    static vec  orbit_target = {0,0,0}; // камера
+    static float orbit_yaw   = 0.0f;    // влево/вправо
+    static float orbit_pitch = 0.0f;    // вверх/вниз
+    static float orbit_dist  = -10.0f;  // дистанция вдоль Z
     SDL_Window *window = SDL_CreateWindow("14гитлер88",  
-W,H,
+    W,H,
     SDL_WINDOW_RESIZABLE 
 );
 
@@ -706,7 +607,7 @@ W,H,
 
 
     matrix x = qet(W,H,90,0.1,1000);
-    matrix proj_inv = invert4x4(x);
+
     
 
     bool running = true;
@@ -750,7 +651,7 @@ W,H,
         H = e.window.data2;
         static float current_fov = 90.0f;
              x = qet(W,H,90,0.1,1000);
-     proj_inv = invert4x4(x);
+
     
         ui.btn.x = (W - ui.btn.w) * 0.5f;
         ui.btn.y = H - ui.btn.h - 12.0f;
@@ -781,7 +682,7 @@ W,H,
             spheres[sphere_count].radius = 0.3f;
             spheres[sphere_count].visible = true;
             sphere_count++;
-            
+            orbit_target = spheres[sphere_count].position;
             printf("Added sphere %d at: %.2f %.2f %.2f\n", 
                    sphere_count, spheres[sphere_count-1].position.x, 
                    spheres[sphere_count-1].position.y, 
@@ -806,22 +707,20 @@ W,H,
 
     case SDL_EVENT_MOUSE_MOTION:
     if (dragging && !ui.typing) {
-        const float sens = 0.001f;
-        
- 
-            scene_yaw   += e.motion.xrel * sens;
-            scene_pitch += e.motion.yrel * sens;
-           
+        const float sens = 0.0005f;
+        orbit_yaw   += e.motion.xrel * sens;
+        orbit_pitch += e.motion.yrel * sens;
+
     }
     break;
+
     case SDL_EVENT_MOUSE_WHEEL:
-        if (!ui.typing) {
-            zoom += e.wheel.y * 0.7f;
-            scene_roll += e.wheel.y * 0.1f;
-            //if (zoom > -2.0f)  zoom = -2.0f;
-            //if (zoom < -50.0f) zoom = -50.0f;
-        }
-        break;
+    if (!ui.typing) {
+        orbit_dist += e.wheel.y * 0.7f;   
+        if (orbit_dist > -2.0f)   orbit_dist = -2.0f;
+        if (orbit_dist < -80.0f)  orbit_dist = -80.0f;
+    }
+    break;
 
     case SDL_EVENT_TEXT_INPUT:
         if (ui.typing) {
@@ -873,19 +772,19 @@ W,H,
         SDL_RenderClear(renderer);  
             cratefon(renderer, W, H,timeq);
         draw_button(renderer);
-        //draw_sphere(renderer, x, W, H, debug_sphere_pos, 1.0f, 20, 20, time, dragging, tqqq);
+        //draw_sphere(renderer, x, W, H, debug_sphere_pos, 1.0f, 20, 20, time, dragging, tqqq,orbit_yaw,orbit_pitch,orbit_dist);
         draw_sphere(renderer, x, W, H, 
                    (vec){0,0,-10}, 
                    0.8f, 
                    19, 19, 
-                   time, dragging, tqqq);
+                   time, dragging, tqqq,orbit_yaw,orbit_pitch,orbit_dist);
         for (int i = 0; i < sphere_count; i++) {
     if (spheres[i].visible) {
         draw_sphere(renderer, x, W, H, 
                    spheres[i].position, 
                    spheres[i].radius, 
                    19, 19, 
-                   time, dragging, tqqq);
+                   time, dragging, tqqq,orbit_yaw,orbit_pitch,orbit_dist);
     }
 }
         SDL_RenderPresent(renderer);
