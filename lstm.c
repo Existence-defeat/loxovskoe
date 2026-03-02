@@ -158,8 +158,8 @@ float * copy(float * x,int sizex){
     memcpy(q,x,sizex*sizeof(float));
     return q;
 }
-void forvard(float * x , int x_embed, float * h ,float * c_prev, int d , cell * lstm , int yoo /*типа в каком слою чувак*/,
-             float * y_out, float * c_out , float * h_out, cache * kesh , int em /*типа какая итерация наврено (типа чтобы к кэшу норм обращаться)*/)
+void forvard(float * x , int x_embed, float * h ,float * c_prev, int d , cell * lstm , int yoo /*типа в каком слою чел*/,
+             float * y_out, float * c_out , float * h_out, cache * kesh , int em /*какая итерация */)
 {
     kesh->x[em] = copy(x,x_embed);
     kesh->h_prev[em] = copy(h,d);
@@ -316,7 +316,6 @@ void accum_gate(
         }
     }
 
-    // dh_prev += W_h^T dz
     for(int k=0;k<H;k++){
         float s=0;
         for(int i=0;i<H;i++) s += W[i*(in+H) + (in+k)] * dz[i];
@@ -329,7 +328,7 @@ void lstm_backward_step(
     cache *k, int t, int layer,
     int in, int H,
     const float *dh, const float *dc_in,
-    float *dh_prev_out, float *dc_prev_out, float *dx_out // dx_out можно NULL если не нужен
+    float *dh_prev_out, float *dc_prev_out, float *dx_out 
 ){
     float *x      = k->x[t];
     float *hprev  = k->h_prev[t];
@@ -340,11 +339,9 @@ void lstm_backward_step(
     float *g      = k->g[t];
     float *c      = k->c[t];
 
-    // 1) tanh(c)
     float *tanhc = xmalloc_vec(H);
     for(int i=0;i<H;i++) tanhc[i] = tanhf(c[i]);
 
-    // 2) do, dc
     float *do_ = xmalloc_vec(H);
     float *dc  = xmalloc_vec(H);
     for(int i=0;i<H;i++){
@@ -352,7 +349,6 @@ void lstm_backward_step(
         dc[i]  = dc_in[i] + dh[i] * o[i] * (1.0f - tanhc[i]*tanhc[i]);
     }
 
-    // 3) df, di, dg, dc_prev
     float *df = xmalloc_vec(H);
     float *di = xmalloc_vec(H);
     float *dg = xmalloc_vec(H);
@@ -364,7 +360,6 @@ void lstm_backward_step(
         dc_prev_out[i] = dc[i] * f[i];
     }
 
-    // 4) dz*
     float *dzf = xmalloc_vec(H);
     float *dzi = xmalloc_vec(H);
     float *dzo = xmalloc_vec(H);
