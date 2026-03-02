@@ -270,10 +270,11 @@ void xz(float * x/*vxod*/,int d,float beta,FC_layer * fc1,FC_layer * fc2, float 
     free(copy); ffn_free(fc1); ffn_free(fc2); free(logvar); free(mu);free(sigma);free(sigma2);free(z_sample);
     free(delta); free(dz); free(du); free(dlog); free(denc); free(oposym);
 }
+// ....... пока что пишу не читать.......
 int main(){
     float lr = 0.06f;
     int logva = 3;
-    HANDLE hSerial = CreateFile("\\\\.\\COM3",     // Путь к порту
+    HANDLE hSerial = CreateFile("\\\\.\\COM3",     
                                 GENERIC_READ | GENERIC_WRITE, 
                                 0,                 
                                 NULL,             
@@ -286,31 +287,27 @@ int main(){
         return 1;
     }
 
-    // DCB — структура , где хранятся настройки скорости и битов
     DCB dcb = {0};
     dcb.DCBlength = sizeof(dcb); 
 
     GetCommState(hSerial, &dcb);      
     dcb.BaudRate = CBR_9600;         
-    dcb.ByteSize = 8;                 // Размер одного пакета данных — 8 бит
+    dcb.ByteSize = 8;                 // Размер одного пакета данных 
     dcb.StopBits = ONESTOPBIT;       
     dcb.Parity = NOPARITY;            
     SetCommState(hSerial, &dcb);      
 
-    char incomingByte;       // Переменная, куда запишем пришедший символ
-    DWORD bytesRead;         // Переменная, куда система запишет, сколько байт реально пришло
+    char incomingByte;     
+    DWORD bytesRead;       
 
-    while(1) {               // Бесконечный цикл опроса
-        // ReadFile — "лезет" в буфер порта и забирает данные
-        // hSerial — откуда берем, &incomingByte — куда кладем, 1 — сколько байт за раз
+    while(1) {           
         if (ReadFile(hSerial, &incomingByte, 1, &bytesRead, NULL)) {
             
-            // Если bytesRead > 0, значит мы реально что-то поймали
             if (bytesRead > 0) {
-                printf("Received: %c\n", incomingByte); // Печатаем символ
+                printf("Received: %c\n", incomingByte); 
             }
         }
-        Sleep(10); // Пауза 10 миллисекунд, чтобы программа не ела все ресурсы процессора
+        Sleep(10); 
     }
 
     CloseHandle(hSerial); 

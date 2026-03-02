@@ -76,16 +76,15 @@ static float gelu(float x) {
            (x + 0.044715f * x * x * x)));
 }
 float gelu1(float x) {
-    const double SQRT_2_OVER_PI = 0.7978845608; // sqrt(2 / M_PI)
+    const double SQRT_2_OVER_PI = 0.7978845608; 
     const double COEFF = 0.044715;
 
     double x3 = (double)x * (double)x * (double)x;
     double inner = SQRT_2_OVER_PI * (x + COEFF * x3);
     double tanh_inner = tanh(inner);
     
-    // Формула: 0.5 * (1 + tanh(inner)) + 0.5 * x * (1 - tanh_inner^2) * (SQRT_2_OVER_PI * (1 + 3 * COEFF * x^2))
     double term1 = 0.5 * (1.0 + tanh_inner);
-    double sech2 = 1.0 - tanh_inner * tanh_inner; // Производная tanh(x) это 1 - tanh^2(x)
+    double sech2 = 1.0 - tanh_inner * tanh_inner; \
     double inner_der = SQRT_2_OVER_PI * (1.0 + 3.0 * COEFF * x * x);
     double term2 = 0.5 * x * sech2 * inner_der;
 
@@ -329,6 +328,7 @@ static float* ffn_forward_one(const float* input, FC_layer* fc,easy_fc_cache * e
     memcpy(eaz->x[0],input,sizeof(float)*d);
     int L = fc->num_layers;
     for (int l=0;l<L;l++) {
+
         int in = (l==0) ? d : fc->layerSize[l-1];
         int out = fc->layerSize[l];
         float* next = xmalloc_vec(out);
@@ -1021,16 +1021,10 @@ void reset_cross_cache(CrossCache* cache) {
 }
 
 
-void backprop_cross_attention(
-    float **loss,        // [T_q][D] 
-    int T_q,             
-    int T_kv,            
-    MultiHeadAttention *mha, 
-    CrossCache *cache, 
-    float lr,
-    float **dX_dec,      
-    float **dX_enc       
-) {
+void backprop_cross_attention( float **loss, /*[T_q][D]*/, int T_q, int T_kv, 
+    MultiHeadAttention *mha, CrossCache *cache,
+     float lr, float **dX_dec, float **dX_enc) 
+{
     int H = mha->num_heads;
     int Dh = mha->d_head;
     int D = mha->d_model;
@@ -1275,7 +1269,7 @@ static float** mha_cross_attention(float** x_dec, int Tdec,
 
     return out;
 }
-
+// ....... пока что пишу не читать.......
 static float** encoder_block(float** x, int T, MultiHeadAttention* mha,
                              LayerNorm* ln1, LayerNorm* ln2,
                              FC_layer* ffn,

@@ -418,7 +418,7 @@ void apply_grads(cell *p, grads *g, float lr) {
         }
     }
 }
-
+// ....... пока что пишу не читать.......
 int main(){
     int size_layers = 5;
     int L = size_layers;
@@ -426,7 +426,7 @@ int main(){
     
 
 
-
+    // идея как рабоатть должно
     float *h_state[L], *c_state[L];
     for(int i = 0 ;  i < L ; ++ i){
         h_state[i] = calloc(d,sizeof(float));
@@ -439,21 +439,19 @@ int main(){
         for (l=0; l<L; l++){
             int in_l = (l==0) ? x_embed : d;
 
-            // out buffers (можно переиспользовать)
             float *h_out = xmalloc_vec(d);
             float *c_out = xmalloc_vec(d);
-            float *y_out = xmalloc_vec(d); // если надо
+            float *y_out = xmalloc_vec(d); 
 
             forvard(input, in_l, h_state[l], c_state[l], d, p, l,
-                    y_out, c_out, h_out, k, t*L + l); // или cache[t][l]
+                    y_out, c_out, h_out, k, t*L + l);
 
-            // обновили состояние слоя
-            free(h_state[l]); free(c_state[l]); // если они были malloc как копии
+            free(h_state[l]); free(c_state[l]); 
             h_state[l] = h_out;
             c_state[l] = c_out;
 
-            input = h_out; // вход в следующий слой
-            free(y_out);   // если не нужен
+            input = h_out; 
+            free(y_out);   
         }
     }
     grads_zero(gr);
@@ -461,7 +459,7 @@ int main(){
     dh_time_next[l]=zeros(d); dc_time_next[l]=zeros(d);
 
     for (t=T-1; t>=0; --t){
-        float *dh_layer = dh_from_loss_at_t; // обычно только на t=T-1
+        float *dh_layer = dh_from_loss_at_t;
         float *dc_layer = zeros(d);
 
         for (l=L-1; l>=0; --l){
@@ -478,8 +476,8 @@ int main(){
             dh_time_next[l] = dh_prev;
             dc_time_next[l] = dc_prev;
 
-            dh_layer = dx;   // вниз по слоям
-            dc_layer = zeros(d); // обычно 0
+            dh_layer = dx;  
+            dc_layer = zeros(d); 
         }
     }
 
